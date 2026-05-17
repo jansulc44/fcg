@@ -13,7 +13,7 @@ with open("user_prompt_nano.txt", "r", encoding="utf-8") as f:
     user_prompt = f.read()
 
 response = client.messages.create(
-    model="claude-opus-4-7",
+    model="claude-opus-4-6",
     max_tokens=1024,
     system=system_instructions,
     messages=[{"role": "user", "content": user_prompt}]
