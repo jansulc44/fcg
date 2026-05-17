@@ -38,7 +38,7 @@
     text-align: center;
   }
 
-  
+
   .brand {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 400;
@@ -364,9 +364,6 @@
         html = html.replace(/^##### (.+?)$/gm, '<h5>$1</h5>');
         html = html.replace(/^###### (.+?)$/gm, '<h6>$1</h6>');
 
-        // Escape HTML before processing
-        const tempDiv = document.createElement('div');
-
         // Bold **text** and __text__
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
@@ -379,47 +376,107 @@
         html = html.replace(/^> (.+?)$/gm, '<blockquote>$1</blockquote>');
         html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
 
-        // Unordered lists
-        html = html.replace(/^\- (.+?)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*?<\/li>)/s, (match) => {
-            return '<ul>' + match + '</ul>';
-        });
-        html = html.replace(/<\/ul>\n<ul>/g, '');
-
-        // Ordered lists
-        html = html.replace(/^\d+\. (.+?)$/gm, '<li>$1</li>');
-
-        // Line breaks - convert multiple newlines to paragraphs
+        // Block-aware processing: paragraphs + lists in one pass.
+        // Lists (both - and N.) are only recognized when they START a block
+        // (preceded by a blank line or the document start). This prevents
+        // wrapped text like "29. dubna" inside a paragraph from being mis-
+        // taken for a numbered list item.
         const lines = html.split('\n');
         let result = [];
         let currentBlock = [];
+        let listBuffer = [];
+        let listType = null; // 'ul' or 'ol'
 
-        for (let line of lines) {
-            line = line.trim();
-            if (line === '') {
-                if (currentBlock.length > 0) {
-                    result.push('<p>' + currentBlock.join(' ') + '</p>');
-                    currentBlock = [];
-                }
-            } else if (line.match(/^<h[2-6]>|^<blockquote>|^<ul>|^<ol>|^<hr>|^<li>/)) {
-                if (currentBlock.length > 0) {
-                    result.push('<p>' + currentBlock.join(' ') + '</p>');
-                    currentBlock = [];
-                }
-                result.push(line);
-            } else {
-                currentBlock.push(line);
+        function flushParagraph() {
+            if (currentBlock.length > 0) {
+                result.push('<p>' + currentBlock.join(' ') + '</p>');
+                currentBlock = [];
             }
         }
-        if (currentBlock.length > 0) {
-            result.push('<p>' + currentBlock.join(' ') + '</p>');
+
+        function flushList() {
+            if (listBuffer.length > 0) {
+                const tag = listType;
+                result.push('<' + tag + '>' +
+                    listBuffer.map(it => '<li>' + it + '</li>').join('') +
+                    '</' + tag + '>');
+                listBuffer = [];
+                listType = null;
+            }
         }
 
-        html = result.join('\n');
+        function flushBlock() {
+            flushParagraph();
+            flushList();
+        }
 
-        // Wrap orphan list items in ul/ol
-        html = html.replace(/(?<!<ul>)(?<!<ol>)\n?<li>(.+?)<\/li>/g, '<ul><li>$1</li></ul>');
-        html = html.replace(/<\/ul>\n<ul>/g, '');
+        // Helper: an ordered-list start is only accepted if the next
+        // non-empty line is ALSO an ordered-list item. This prevents
+        // isolated sentences starting with a date like "29. dubna..."
+        // from being rendered as a one-item numbered list.
+        function nextLineIsOlItem(startIdx) {
+            for (let j = startIdx + 1; j < lines.length; j++) {
+                const t = lines[j].trim();
+                if (t === '') return false;
+                return /^\d+\. /.test(t);
+            }
+            return false;
+        }
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+
+            if (line === '') {
+                flushBlock();
+                continue;
+            }
+
+            // Already-converted block-level HTML — flush and pass through
+            if (line.match(/^<h[2-6]>|^<blockquote>|^<hr>/)) {
+                flushBlock();
+                result.push(line);
+                continue;
+            }
+
+            const ulMatch = line.match(/^[-*] (.+)$/);
+            const olMatch = line.match(/^\d+\. (.+)$/);
+
+            // A list item is valid only if it starts a new block
+            // (no paragraph is currently being accumulated) OR continues
+            // an active list of the same type.
+            const canStartList = currentBlock.length === 0;
+            const continuesUl = listType === 'ul' && ulMatch;
+            const continuesOl = listType === 'ol' && olMatch;
+
+            if (continuesUl) {
+                listBuffer.push(ulMatch[1]);
+                continue;
+            }
+            if (continuesOl) {
+                listBuffer.push(olMatch[1]);
+                continue;
+            }
+
+            if (ulMatch && canStartList) {
+                flushList();
+                listType = 'ul';
+                listBuffer.push(ulMatch[1]);
+                continue;
+            }
+            if (olMatch && canStartList && nextLineIsOlItem(i)) {
+                flushList();
+                listType = 'ol';
+                listBuffer.push(olMatch[1]);
+                continue;
+            }
+
+            // Plain paragraph line — close any active list first
+            flushList();
+            currentBlock.push(line);
+        }
+        flushBlock();
+
+        html = result.join('\n');
 
         return html;
     }
