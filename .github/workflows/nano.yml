@@ -19,13 +19,16 @@ jobs:
           python-version: '3.x'
           
       - name: Install dependencies
-        run: pip install anthropic
-        
+        run: pip install anthropic markdown
+
       - name: Run fetch script
         env:
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         run: python fetch_claude_nano.py
-        
+
+      - name: Rebuild static index.html
+        run: python build_index.py
+
       - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Action"

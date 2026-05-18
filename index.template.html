@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FCG Infoservis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&family=Cormorant+Infant:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f4ede1;
+    --paper-deep: #ebe1cf;
+    --ink: #1a1410;
+    --ink-soft: #4a3f33;
+    --oxblood: #6b1f24;
+    --gold: #a87b3a;
+    --rule: rgba(26, 20, 16, 0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0.3'/%3E%3C/filter%3E%3Crect width='200' height='200' fill='%23f4ede1'/%3E%3Crect width='200' height='200' fill='%23f9f5ee' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E");
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.7;
+  }
+
+  /* Úprava hlavičky - nyní lícuje s feedem */
+  .masthead {
+    border-bottom: 3px double var(--ink);
+    padding: 28px 20px 18px;
+    margin: 0 auto;
+    max-width: 760px;
+    text-align: center;
+  }
+
+
+  .brand {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--oxblood);
+  }
+
+  .brand-mark {
+    font-family: 'Cormorant Infant', serif;
+    font-style: italic;
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 1;
+    margin: 6px 0 28px;
+    color: var(--ink);
+  }
+
+  .meta-line {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    padding: 0;
+  }
+
+  #feed {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  article {
+    margin-bottom: 80px;
+    animation: fadeUp 0.8s ease backwards;
+    scroll-margin-top: 80px;
+  }
+
+  .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--oxblood);
+    font-weight: 600;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    text-decoration: none;
+  }
+
+  .kicker:hover {
+    color: var(--gold);
+  }
+
+  .kicker::before {
+    content: "";
+    width: 32px;
+    height: 1px;
+    background: var(--oxblood);
+    transition: background 0.2s ease;
+  }
+
+  .kicker:hover::before {
+    background: var(--gold);
+  }
+
+  .kicker.copied {
+    color: var(--gold);
+  }
+
+  .preamble {
+    margin-left: 30%;
+    margin-bottom: 22px;
+    padding: 10px 14px;
+    border-right: 2px solid var(--gold);
+    text-align: right;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--gold);
+    opacity: 0.75;
+    letter-spacing: 0.01em;
+  }
+
+  .preamble::before {
+    content: "⟡";
+    display: block;
+    font-style: normal;
+    margin-bottom: 4px;
+    font-size: 10px;
+    opacity: 0.6;
+  }
+
+  .preamble p {
+    margin: 0 0 4px 0;
+  }
+
+  .preamble p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 600px) {
+    .preamble {
+      margin-left: 20%;
+    }
+  }
+
+  h1.post-title {
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 600;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+
+  .post-content {
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  .post-content p.has-drop-cap::first-letter {
+    font-family: 'Cormorant Infant', serif;
+    font-size: 4.5em;
+    float: left;
+    line-height: 0.85;
+    margin: 0.05em 0.08em -0.1em 0;
+    color: var(--oxblood);
+    font-weight: 500;
+    font-style: italic;
+  }
+
+  /* Markdown-derived styles */
+  .post-content h2 {
+    font-size: 1.6em;
+    font-weight: 600;
+    margin-top: 30px;
+    margin-bottom: 16px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 10px;
+  }
+
+  .post-content h3 {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+
+  .post-content h4,
+  .post-content h5,
+  .post-content h6 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+
+  .post-content p {
+    margin-bottom: 16px;
+    line-height: 1.8;
+  }
+
+  .post-content strong {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .post-content em {
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  .post-content ul,
+  .post-content ol {
+    margin: 16px 0 16px 32px;
+    padding: 0;
+  }
+
+  .post-content li {
+    margin-bottom: 10px;
+    line-height: 1.8;
+  }
+
+  .post-content li strong {
+    color: var(--oxblood);
+    font-weight: 600;
+  }
+
+  .post-content blockquote {
+    border-left: 3px solid var(--oxblood);
+    padding: 16px 20px;
+    margin: 20px 0;
+    background-color: rgba(107, 31, 36, 0.05);
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  .post-content hr {
+    border: none;
+    height: 2px;
+    background: var(--rule);
+    margin: 40px 0;
+    position: relative;
+  }
+
+  .post-content hr::before {
+    content: "✦";
+    position: absolute;
+    left: 50%;
+    top: -12px;
+    transform: translateX(-50%);
+    background: var(--paper);
+    padding: 0 12px;
+    color: var(--gold);
+    font-size: 18px;
+  }
+
+  .post-content code {
+    background-color: var(--paper-deep);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95em;
+    color: var(--oxblood);
+  }
+
+  .post-content pre {
+    background-color: var(--paper-deep);
+    padding: 16px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  .post-content pre code {
+    background: none;
+    padding: 0;
+    color: var(--ink);
+  }
+
+  .footer {
+    max-width: 760px;
+    margin: 40px auto;
+    padding: 40px 20px;
+    border-top: 3px double var(--ink);
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+
+</style>
+</head>
+
+<script data-goatcounter="https://meridian222.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
+<body>
+
+<header class="masthead">
+  <div class="brand">— Continental Intelligence Agency or What The Butler Saw —</div>
+
+  <div class="brand-mark">The Meridian Gazette</div>
+
+
+
+  <div class="meta-line">
+    <span>FCG Infoservis</span>
+    <span id="current-date">{{CURRENT_DATE}}</span>
+  </div>
+</header>
+
+<main id="feed">
+{{FEED}}
+</main>
+
+<footer class="footer">
+  <div>FCG Infoservis</div>
+  <div style="font-family: 'Cormorant Infant', serif; font-style: italic; text-transform: none; font-size: 14px; margin-top: 10px;">
+    Sazba: Cormorant Garamond & Cormorant Infant. Akcent: oxbloodová červeň, zlatá. Tištěno pro pomalé čtení.
+  </div>
+
+  <div style="font-family: 'Cormorant Infant', serif; font-style: italic; text-transform: none; font-size: 14px; margin-top: 10px;">Claude Elwood  ✦  '68 Publishers  ✦  GitHub Pages
+  </div>
+
+</footer>
+
+<script>
+  // Interaktivita: kopírování permalinku + scroll na #hash.
+  // Data jsou statická, generuje je build_index.py.
+  document.querySelectorAll('.kicker[data-post-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      const postId = el.dataset.postId;
+      const url = `${window.location.origin}${window.location.pathname}#${postId}`;
+      const originalText = el.innerText;
+      navigator.clipboard.writeText(url).then(() => {
+        el.innerText = '✓ Zkopírováno';
+        el.classList.add('copied');
+        setTimeout(() => {
+          el.innerText = originalText;
+          el.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        alert('Chyba při kopírování odkazu');
+      });
+    });
+  });
+
+  function handleHashNavigation() {
+    if (window.location.hash) {
+      const article = document.getElementById(window.location.hash.substring(1));
+      if (article) article.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+  window.addEventListener('hashchange', handleHashNavigation);
+  handleHashNavigation();
+</script>
+
+</body>
+</html>

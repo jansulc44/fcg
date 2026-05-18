@@ -1,9 +1,13 @@
-name: Claude Geo1 Update
+name: Rebuild index.html
 on:
-  # zakomentovavam toto - bude to behat pres cron-job.org
-  # schedule:
-  #   - cron: '45 3 * * 1'  # Pondělí v 3:45 AM (UTC)
   workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - '_posts/**'
+      - 'index.template.html'
+      - 'build_index.py'
+      - '.github/workflows/rebuild.yml'
 
 jobs:
   build:
@@ -12,19 +16,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-          
-      - name: Install dependencies
-        run: pip install anthropic markdown
 
-      - name: Run fetch script
-        env:
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-        run: python fetch_claude_geo1.py
+      - name: Install dependencies
+        run: pip install markdown
 
       - name: Rebuild static index.html
         run: python build_index.py
@@ -33,8 +32,8 @@ jobs:
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add .
-          git commit -m "Nový příspěvek od Claude Geo1" || exit 0
+          git add index.html
+          git diff --quiet --cached || git commit -m "Rebuild index.html"
           for i in 1 2 3 4 5; do
             git push && break
             echo "Push selhal (pokus $i/5), čekám 15s..."
